@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id           String            @id @default(cuid())
+  nome         String            @db.VarChar(120)
+  email        String            @unique @db.VarChar(180)
+  senhaHash    String            @map("senha_hash") @db.VarChar(255)
+
+  historicos   CrushHistorico[]
+
+  criadoEm     DateTime          @default(now()) @map("criado_em")
+  atualizadoEm DateTime          @updatedAt @map("atualizado_em")
+
+  @@map("tb_usuarios")
+}
+
+model CrushHistorico {
+  id                                String          @id @default(cuid())
+
+  usuarioId                         String          @map("usuario_id")
+  usuario                           Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  modo                              CalculationMode
+  observacao                        String?         @db.VarChar(255)
+
+  precoSojaSaca                     Decimal         @map("preco_soja_saca") @db.Decimal(14, 4)
+  precoFareloTon                    Decimal         @map("preco_farelo_ton") @db.Decimal(14, 4)
+  precoOleoTon                      Decimal         @map("preco_oleo_ton") @db.Decimal(14, 4)
+
+  kgFareloPorSaca                   Decimal         @map("kg_farelo_por_saca") @db.Decimal(10, 4)
+  kgOleoPorSaca                     Decimal         @map("kg_oleo_por_saca") @db.Decimal(10, 4)
+  custosOperacionaisPorSaca         Decimal         @map("custos_operacionais_por_saca") @db.Decimal(14, 4)
+
+  receitaFarelo                     Decimal         @map("receita_farelo") @db.Decimal(14, 4)
+  receitaOleo                       Decimal         @map("receita_oleo") @db.Decimal(14, 4)
+  receitaTotalDerivados             Decimal         @map("receita_total_derivados") @db.Decimal(14, 4)
+  custoTotal                        Decimal         @map("custo_total") @db.Decimal(14, 4)
+  margemBruta                       Decimal         @map("margem_bruta") @db.Decimal(14, 4)
+  margemLiquida                     Decimal         @map("margem_liquida") @db.Decimal(14, 4)
+  margemPercentualSobreCusto        Decimal         @map("margem_percentual_sobre_custo") @db.Decimal(10, 4)
+  precoMaximoSojaParaMargemZero     Decimal         @map("preco_maximo_soja_para_margem_zero") @db.Decimal(14, 4)
+
+  status                            CrushStatus
+  statusLabel                       String          @map("status_label") @db.VarChar(80)
+
+  inputSnapshot                     Json            @map("input_snapshot") @db.JsonB
+  convertedPricesSnapshot           Json            @map("converted_prices_snapshot") @db.JsonB
+  resultSnapshot                    Json            @map("result_snapshot") @db.JsonB
+
+  criadoEm                          DateTime        @default(now()) @map("criado_em")
+  atualizadoEm                      DateTime        @updatedAt @map("atualizado_em")
+
+  @@index([usuarioId])
+  @@index([usuarioId, criadoEm(sort: Desc)])
+  @@index([usuarioId, modo])
+  @@index([usuarioId, margemLiquida])
+  @@index([usuarioId, status])
+  @@map("tb_crush_historicos")
+}
+
+enum CalculationMode {
+  BRL
+  CBOT
+}
+
+enum CrushStatus {
+  PREJUIZO
+  APERTADA
+  BOA
+  EXCELENTE
+}
