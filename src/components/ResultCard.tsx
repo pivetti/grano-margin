@@ -23,16 +23,18 @@ export function ResultCard({
 }: ResultCardProps) {
   return (
     <article
-      className={`rounded-lg border p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[var(--border)] ${toneClasses[tone]}`}
+      className={`rounded-lg border p-3 transition duration-200 hover:border-[var(--border)] md:p-4 md:hover:-translate-y-0.5 ${toneClasses[tone]}`}
     >
       <p className="text-xs font-medium uppercase tracking-[0.08em] opacity-75">
         {label}
       </p>
-      <p className="gm-number mt-2 text-2xl font-semibold leading-tight">
+      <p className="gm-number mt-1.5 text-lg font-semibold leading-tight md:mt-2 md:text-2xl">
         {value}
       </p>
       {helper ? (
-        <p className="mt-2 text-xs leading-5 opacity-70">{helper}</p>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-5 opacity-70 md:mt-2 md:line-clamp-none">
+          {helper}
+        </p>
       ) : null}
     </article>
   );

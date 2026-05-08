@@ -25,7 +25,7 @@ export function InputField({
 }: InputFieldProps) {
   return (
     <div>
-      <div className="flex min-h-6 items-center justify-between gap-3">
+      <div className="flex min-h-6 items-center justify-between gap-2">
         <label
           htmlFor={id}
           className="block text-sm font-semibold text-[var(--text-primary)]"
@@ -34,7 +34,7 @@ export function InputField({
         </label>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      <div className="mt-2 flex min-h-11 rounded-md border border-[var(--border-soft)] bg-[var(--background-soft)] transition duration-200 focus-within:border-[var(--brand)] focus-within:bg-[var(--surface)] focus-within:shadow-[var(--focus-ring)]">
+      <div className="mt-1.5 flex min-h-11 rounded-md border border-[var(--border-soft)] bg-[var(--background-soft)] transition duration-200 focus-within:border-[var(--brand)] focus-within:bg-[var(--surface)] focus-within:shadow-[var(--focus-ring)] md:mt-2">
         {prefix ? (
           <span className="flex min-w-12 items-center justify-center border-r border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">
             {prefix}
@@ -55,9 +55,11 @@ export function InputField({
         ) : null}
       </div>
       {error ? (
-        <p className="mt-2 text-sm leading-5 text-red-300">{error}</p>
+        <p className="mt-1.5 text-xs leading-5 text-red-300 md:mt-2 md:text-sm">
+          {error}
+        </p>
       ) : helper ? (
-        <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">
+        <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[var(--text-muted)] md:mt-2 md:line-clamp-none">
           {helper}
         </p>
       ) : null}

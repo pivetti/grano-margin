@@ -130,7 +130,7 @@ export function HistoryTable({
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-[1fr_180px_180px_190px]">
+      <div className="mt-4 grid gap-3 md:mt-5 md:grid-cols-[1fr_180px_180px_190px]">
         <label className="block">
           <span className="text-xs font-medium text-[var(--text-muted)]">
             Buscar por observacao
@@ -198,15 +198,99 @@ export function HistoryTable({
           <SkeletonCard />
         </div>
       ) : items.length === 0 ? (
-        <div className="mt-5">
+        <div className="mt-4 md:mt-5">
           <EmptyState
             title={emptyCopy.title}
             description={emptyCopy.description}
           />
         </div>
       ) : (
-        <div className="mt-5 overflow-x-auto rounded-lg border border-[var(--border-soft)] bg-[var(--surface)]">
-          <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
+        <>
+          <div className="mt-4 grid gap-3 md:hidden">
+            {visibleItems.length === 0 ? (
+              <EmptyState
+                title="Nenhum resultado para os filtros"
+                description="Ajuste a busca, modo, status ou ordenacao para visualizar outros cenarios."
+              />
+            ) : (
+              visibleItems.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {formatDateTime(item.createdAt)}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {getModeLabel(item.input.mode)}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      status={item.result.status}
+                      label={item.result.statusLabel}
+                    />
+                  </div>
+
+                  <p className="mt-3 line-clamp-2 text-sm text-[var(--text-secondary)]">
+                    {item.observacoes || "Sem observacao"}
+                  </p>
+
+                  <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--border-soft)] pt-3">
+                    <div>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        Margem
+                      </p>
+                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {formatCurrencyBRL(item.result.margemLiquida)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        % custo
+                      </p>
+                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {formatPercent(
+                          item.result.margemPercentualSobreCusto,
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        Soja max.
+                      </p>
+                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                        {formatCurrencyBRL(
+                          item.result.precoMaximoSojaParaMargemZero,
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <Button
+                      size="sm"
+                      variant="subtle"
+                      onClick={() => onLoad(item)}
+                    >
+                      Carregar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => onDelete(item)}
+                    >
+                      Excluir
+                    </Button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
+          <div className="mt-5 hidden overflow-x-auto rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] md:block">
+            <table className="w-full min-w-[1080px] border-collapse text-left text-sm">
             <thead className="border-b border-[var(--border-soft)] bg-[var(--background-soft)] text-xs uppercase tracking-[0.08em] text-[var(--text-muted)]">
               <tr>
                 <th className="px-4 py-3 font-semibold">Data</th>
@@ -279,8 +363,9 @@ export function HistoryTable({
                 ))
               )}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+        </>
       )}
     </section>
   );

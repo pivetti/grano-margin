@@ -677,32 +677,32 @@ export function CrushMarginCalculator() {
   return (
     <section
       id="calculadora"
-      className="scroll-mt-20 bg-[var(--background)] py-14 text-[var(--text-primary)] sm:py-16"
+      className="scroll-mt-16 bg-[var(--background)] py-8 text-[var(--text-primary)] md:scroll-mt-20 md:py-16"
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--brand)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--brand)] md:text-sm">
               Calculadora
             </p>
-            <h2 className="mt-2 text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+            <h2 className="mt-1.5 text-2xl font-semibold leading-tight tracking-tight md:mt-2 md:text-4xl">
               Simule a margem por saca de 60 kg
             </h2>
           </div>
-          <p className="max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
+          <p className="max-w-2xl text-xs leading-5 text-[var(--text-secondary)] md:text-sm md:leading-6">
             Interface densa, responsiva e orientada a decisao para soja, farelo,
             oleo, dolar e CBOT.
           </p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <div className="gm-panel rounded-lg p-5 sm:p-6">
-            <div className="flex flex-col gap-4 border-b border-[var(--border-soft)] pb-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="grid gap-4 md:gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+          <div className="gm-panel rounded-lg p-4 sm:p-6">
+            <div className="flex flex-col gap-3 border-b border-[var(--border-soft)] pb-4 sm:flex-row sm:items-start sm:justify-between md:gap-4 md:pb-5">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
                   Modo de entrada
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+                <p className="mt-1.5 text-xs leading-5 text-[var(--text-secondary)] md:mt-2 md:text-sm md:leading-6">
                   {getModeDescription(form.mode)}
                 </p>
               </div>
@@ -711,7 +711,7 @@ export function CrushMarginCalculator() {
               </Button>
             </div>
 
-            <div className="mt-5 grid gap-2 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] p-1.5 sm:grid-cols-3">
+            <div className="mt-4 grid gap-2 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] p-1.5 sm:grid-cols-2 md:mt-5">
               {modeOptions.map((option) => {
                 const isActive = option.mode === form.mode;
 
@@ -721,7 +721,7 @@ export function CrushMarginCalculator() {
                     type="button"
                     onClick={() => updateMode(option.mode)}
                     className={[
-                      "rounded-md border px-3 py-3 text-left transition duration-200",
+                      "rounded-md border px-3 py-2.5 text-left transition duration-200 md:py-3",
                       isActive
                         ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(61,220,132,0.14)]"
                         : "border-transparent text-[var(--text-secondary)] hover:bg-white/[0.04] hover:text-[var(--text-primary)]",
@@ -730,7 +730,7 @@ export function CrushMarginCalculator() {
                     <span className="block text-sm font-semibold">
                       {option.label}
                     </span>
-                    <span className="mt-1 block text-xs text-[var(--text-muted)]">
+                    <span className="mt-1 line-clamp-2 block text-xs text-[var(--text-muted)]">
                       {option.description}
                     </span>
                   </button>
@@ -738,7 +738,7 @@ export function CrushMarginCalculator() {
               })}
             </div>
 
-            <form className="mt-6 grid gap-5 sm:grid-cols-2">
+            <form className="mt-4 grid gap-4 sm:grid-cols-2 md:mt-6 md:gap-5">
               {marketFields.map((field) => (
                 <InputField
                   key={field.name}
@@ -820,10 +820,10 @@ export function CrushMarginCalculator() {
               </div>
             </form>
 
-            <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start">
+            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start md:mt-6">
               <div className="space-y-3">
                 {authLoaded && !user ? (
-                  <div className="rounded-lg border border-[var(--warning)]/30 bg-[#20180c] p-4 text-sm leading-6 text-amber-100">
+                  <div className="rounded-lg border border-[var(--warning)]/30 bg-[#20180c] p-3 text-xs leading-5 text-amber-100 md:p-4 md:text-sm md:leading-6">
                     Sem login, este cenario fica salvo apenas no cache deste
                     navegador. Para salvar no banco e acessar em outros
                     dispositivos, faca login.
@@ -868,16 +868,16 @@ export function CrushMarginCalculator() {
             </div>
           </div>
 
-          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <aside className="space-y-3 md:space-y-4 xl:sticky xl:top-24 xl:self-start">
             {result ? (
               <>
-                <div className="gm-panel-elevated rounded-lg p-5">
+                <div className="gm-panel-elevated rounded-lg p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
                         Margem liquida
                       </p>
-                      <p className="gm-number mt-3 text-4xl font-semibold tracking-tight text-[var(--text-primary)]">
+                      <p className="gm-number mt-2 text-3xl font-semibold tracking-tight text-[var(--text-primary)] md:mt-3 md:text-4xl">
                         {formatCurrencyBRL(result.margemLiquida)}
                       </p>
                     </div>
@@ -886,12 +886,12 @@ export function CrushMarginCalculator() {
                       label={result.statusLabel}
                     />
                   </div>
-                  <div className="mt-5 grid grid-cols-2 gap-3 border-t border-[var(--border-soft)] pt-4">
+                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--border-soft)] pt-3 md:mt-5 md:pt-4">
                     <div>
                       <p className="text-xs text-[var(--text-muted)]">
                         % sobre custo
                       </p>
-                      <p className="gm-number mt-1 text-xl font-semibold text-[var(--text-primary)]">
+                      <p className="gm-number mt-1 text-lg font-semibold text-[var(--text-primary)] md:text-xl">
                         {formatPercent(result.margemPercentualSobreCusto)}
                       </p>
                     </div>
@@ -899,7 +899,7 @@ export function CrushMarginCalculator() {
                       <p className="text-xs text-[var(--text-muted)]">
                         Soja maxima
                       </p>
-                      <p className="gm-number mt-1 text-xl font-semibold text-[var(--text-primary)]">
+                      <p className="gm-number mt-1 text-lg font-semibold text-[var(--text-primary)] md:text-xl">
                         {formatCurrencyBRL(
                           result.precoMaximoSojaParaMargemZero,
                         )}
@@ -908,7 +908,7 @@ export function CrushMarginCalculator() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-1">
                   <ResultCard
                     label="Receita farelo"
                     value={formatCurrencyBRL(result.receitaFarelo)}
@@ -950,7 +950,7 @@ export function CrushMarginCalculator() {
         </div>
 
         {result ? (
-          <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="mt-4 grid gap-4 md:mt-6 md:gap-6 lg:grid-cols-[1fr_360px]">
             <ConversionPreview
               prices={result.convertedPrices}
               showUsd={form.mode !== "BRL"}
@@ -959,13 +959,13 @@ export function CrushMarginCalculator() {
           </div>
         ) : null}
 
-        <p className="mt-5 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] px-4 py-3 text-xs leading-5 text-[var(--text-muted)]">
+        <p className="mt-4 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] px-3 py-2.5 text-xs leading-5 text-[var(--text-muted)] md:mt-5 md:px-4 md:py-3">
           Este sistema realiza simulacoes com base nos valores informados pelo
           usuario. Nao fornecemos, revendemos ou redistribuimos dados de mercado
           de terceiros.
         </p>
 
-        <div className="mt-10">
+        <div className="mt-7 md:mt-10">
           <HistoryTable
             items={history}
             isAuthenticated={Boolean(user)}
