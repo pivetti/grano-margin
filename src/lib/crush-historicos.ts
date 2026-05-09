@@ -1,4 +1,5 @@
 import type { CrushHistorico } from "@/generated/prisma/client";
+import { normalizeCrushMarginInput } from "@/lib/calcular-crush-margin";
 import type {
   CrushMarginHistoryItem,
   CrushMarginInput,
@@ -47,9 +48,11 @@ function isCrushMarginResult(value: unknown): value is CrushMarginResult {
 export function serializeCrushHistorico(
   historico: CrushHistoricoWithSnapshots,
 ): CrushMarginHistoryItem {
-  const input = isCrushMarginInput(historico.inputSnapshot)
-    ? historico.inputSnapshot
-    : ({ mode: historico.modo } as CrushMarginInput);
+  const input = normalizeCrushMarginInput(
+    isCrushMarginInput(historico.inputSnapshot)
+      ? historico.inputSnapshot
+      : ({ mode: historico.modo } as CrushMarginInput),
+  );
 
   const fallbackResult = {
     convertedPrices: {

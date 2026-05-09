@@ -1,14 +1,19 @@
 import { z } from "zod";
 
-const positiveNumber = z.coerce
-  .number()
-  .finite("Informe um numero valido.")
-  .positive("O valor precisa ser maior que zero.");
+const finiteNumber = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? NaN : value),
+  z.coerce.number().finite("Informe um numero valido."),
+);
 
-const nonNegativeNumber = z.coerce
-  .number()
-  .finite("Informe um numero valido.")
-  .nonnegative("O valor nao pode ser negativo.");
+const positiveNumber = finiteNumber.refine(
+  (value) => value > 0,
+  "O valor precisa ser maior que zero.",
+);
+
+const nonNegativeNumber = finiteNumber.refine(
+  (value) => value >= 0,
+  "O valor nao pode ser negativo.",
+);
 
 const baseInputSchema = {
   kgFareloPorSaca: positiveNumber,
@@ -29,6 +34,7 @@ export const crushMarginInputSchema = z.discriminatedUnion("mode", [
     ...baseInputSchema,
     cotacaoDolar: positiveNumber,
     sojaUsdPorBushel: nonNegativeNumber,
+    premioSojaUsdPorBushel: finiteNumber.default(0),
     fareloUsdPorShortTon: nonNegativeNumber,
     oleoCentsPorLibra: nonNegativeNumber,
   }),

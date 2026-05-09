@@ -20,7 +20,35 @@ export function ConversionPreview({ prices, showUsd }: ConversionPreviewProps) {
           </h3>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      {showUsd ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Soja CBOT original"
+            value={formatCurrencyUSD(prices.sojaUsdPorBushel ?? 0)}
+            helper="US$/bushel"
+            accent="info"
+          />
+          <MetricCard
+            label="Premio da soja"
+            value={formatCurrencyUSD(prices.premioSojaUsdPorBushel ?? 0)}
+            helper="US$/bushel"
+            accent="info"
+          />
+          <MetricCard
+            label="Soja ajustada"
+            value={formatCurrencyUSD(prices.sojaAjustadaUsdPorBushel ?? 0)}
+            helper="US$/bushel"
+            accent="info"
+          />
+          <MetricCard
+            label="Dolar utilizado"
+            value={formatCurrencyBRL(prices.cotacaoDolar ?? 0)}
+            helper="R$/US$"
+            accent="info"
+          />
+        </div>
+      ) : null}
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <MetricCard
           label="Soja convertida"
           value={formatCurrencyBRL(prices.precoSojaSaca)}
@@ -45,7 +73,7 @@ export function ConversionPreview({ prices, showUsd }: ConversionPreviewProps) {
           <MetricCard
             label="Soja em USD"
             value={formatCurrencyUSD(prices.precoSojaUsdSaca ?? 0)}
-            helper="US$/saca derivado do CBOT"
+            helper="US$/saca ajustado"
             accent="info"
           />
           <MetricCard

@@ -17,6 +17,7 @@ export type CbotInput = BaseCrushInput & {
   mode: "CBOT";
   cotacaoDolar: number;
   sojaUsdPorBushel: number;
+  premioSojaUsdPorBushel: number;
   fareloUsdPorShortTon: number;
   oleoCentsPorLibra: number;
 };
@@ -27,10 +28,53 @@ export type ConvertedPrices = {
   precoSojaSaca: number;
   precoFareloTon: number;
   precoOleoTon: number;
+  cotacaoDolar?: number;
+  sojaUsdPorBushel?: number;
+  premioSojaUsdPorBushel?: number;
+  sojaAjustadaUsdPorBushel?: number;
   precoSojaUsdSaca?: number;
   precoFareloUsdTon?: number;
   precoOleoUsdTon?: number;
 };
+
+const KG_POR_SACA = 60;
+const KG_POR_BUSHEL_SOJA = 27.216;
+const SHORT_TON_EM_TONELADA_METRICA = 0.90718474;
+const KG_POR_LIBRA = 0.45359237;
+
+export function normalizeCrushMarginInput(
+  input: CrushMarginInput,
+): CrushMarginInput {
+  if (input.mode !== "CBOT") {
+    return input;
+  }
+
+  const legacyInput = input as CbotInput & {
+    sojaCentsPorBushel?: number;
+    premioSojaUsdPorBushel?: number;
+  };
+
+  const sojaUsdPorBushel =
+    typeof legacyInput.sojaUsdPorBushel === "number" &&
+    Number.isFinite(legacyInput.sojaUsdPorBushel)
+      ? legacyInput.sojaUsdPorBushel
+      : typeof legacyInput.sojaCentsPorBushel === "number" &&
+          Number.isFinite(legacyInput.sojaCentsPorBushel)
+        ? legacyInput.sojaCentsPorBushel / 100
+        : 0;
+
+  const premioSojaUsdPorBushel =
+    typeof legacyInput.premioSojaUsdPorBushel === "number" &&
+    Number.isFinite(legacyInput.premioSojaUsdPorBushel)
+      ? legacyInput.premioSojaUsdPorBushel
+      : 0;
+
+  return {
+    ...input,
+    sojaUsdPorBushel,
+    premioSojaUsdPorBushel,
+  };
+}
 
 export type CrushMarginResult = {
   convertedPrices: ConvertedPrices;
@@ -55,13 +99,10 @@ export function convertToBrlPrices(input: CrushMarginInput): ConvertedPrices {
     };
   }
 
-  const KG_POR_SACA = 60;
-  const KG_POR_BUSHEL_SOJA = 27.216;
-  const SHORT_TON_EM_TONELADA_METRICA = 0.90718474;
-  const KG_POR_LIBRA = 0.45359237;
-
   const bushelsPorSaca = KG_POR_SACA / KG_POR_BUSHEL_SOJA;
-  const precoSojaUsdSaca = input.sojaUsdPorBushel * bushelsPorSaca;
+  const sojaAjustadaUsdPorBushel =
+    input.sojaUsdPorBushel + input.premioSojaUsdPorBushel;
+  const precoSojaUsdSaca = sojaAjustadaUsdPorBushel * bushelsPorSaca;
 
   const precoFareloUsdTon =
     input.fareloUsdPorShortTon / SHORT_TON_EM_TONELADA_METRICA;
@@ -74,6 +115,10 @@ export function convertToBrlPrices(input: CrushMarginInput): ConvertedPrices {
     precoSojaSaca: precoSojaUsdSaca * input.cotacaoDolar,
     precoFareloTon: precoFareloUsdTon * input.cotacaoDolar,
     precoOleoTon: precoOleoUsdTon * input.cotacaoDolar,
+    cotacaoDolar: input.cotacaoDolar,
+    sojaUsdPorBushel: input.sojaUsdPorBushel,
+    premioSojaUsdPorBushel: input.premioSojaUsdPorBushel,
+    sojaAjustadaUsdPorBushel,
     precoSojaUsdSaca,
     precoFareloUsdTon,
     precoOleoUsdTon,

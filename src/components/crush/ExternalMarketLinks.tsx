@@ -28,7 +28,7 @@ export function ExternalMarketLinks({
         </p>
       </div>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {links.map((link) => (
           <a
             key={link.url}

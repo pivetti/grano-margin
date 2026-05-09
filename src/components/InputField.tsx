@@ -9,6 +9,7 @@ type InputFieldProps = {
   helper?: string;
   prefix?: string;
   suffix?: string;
+  placeholder?: string;
   action?: ReactNode;
 };
 
@@ -21,6 +22,7 @@ export function InputField({
   helper,
   prefix,
   suffix,
+  placeholder = "0,00",
   action,
 }: InputFieldProps) {
   return (
@@ -46,7 +48,7 @@ export function InputField({
           onChange={(event) => onChange(event.target.value)}
           inputMode="decimal"
           className="gm-number min-h-11 w-full min-w-0 bg-transparent px-3 py-2 text-base text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)]"
-          placeholder="0,00"
+          placeholder={placeholder}
         />
         {suffix ? (
           <span className="flex items-center border-l border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">

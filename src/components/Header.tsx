@@ -8,7 +8,7 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border-soft)] bg-[rgba(7,10,13,0.86)] text-[var(--text-primary)] backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-6 lg:px-8">
-        <Link href="/#topo" className="flex min-w-0 items-center">
+        <Link href="/" className="flex min-w-0 items-center">
           <span className="flex min-w-0 flex-col leading-none">
             <span className="text-sm font-semibold tracking-tight">
               GranoMargin
@@ -17,17 +17,17 @@ export async function Header() {
         </Link>
 
         <nav className="hidden items-center gap-7 text-sm text-[var(--text-secondary)] md:flex">
-          <Link className="transition hover:text-[var(--text-primary)]" href="/#como-funciona">
-            Como funciona
-          </Link>
-          <Link className="transition hover:text-[var(--text-primary)]" href="/#beneficios">
-            Beneficios
-          </Link>
           <Link className="transition hover:text-[var(--text-primary)]" href="/#calculadora">
             Calculadora
           </Link>
           <Link className="transition hover:text-[var(--text-primary)]" href="/#historico">
             Historico
+          </Link>
+          <Link className="transition hover:text-[var(--text-primary)]" href="/#como-funciona">
+            Como funciona
+          </Link>
+          <Link className="transition hover:text-[var(--text-primary)]" href="/#beneficios">
+            Beneficios
           </Link>
           {user ? (
             <Link className="transition hover:text-[var(--text-primary)]" href="/dashboard">

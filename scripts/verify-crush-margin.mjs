@@ -29,6 +29,7 @@ const cbotInput = {
   mode: "CBOT",
   cotacaoDolar: 4.9079,
   sojaUsdPorBushel: 11.77,
+  premioSojaUsdPorBushel: 0,
   fareloUsdPorShortTon: 300,
   oleoCentsPorLibra: 50,
   kgFareloPorSaca: 44,
@@ -41,11 +42,21 @@ const cbotResult = calcularCrushMargin(cbotInput);
 
 assert.equal(round(cbotPrices.precoSojaUsdSaca ?? 0), 25.947972);
 assert.equal(round(cbotPrices.precoSojaSaca), 127.350051);
+assert.equal(round(cbotPrices.sojaAjustadaUsdPorBushel ?? 0), 11.77);
 assert.equal(round(cbotPrices.precoFareloUsdTon ?? 0), 330.693393);
 assert.equal(round(cbotPrices.precoOleoUsdTon ?? 0), 1102.311311);
 assert.equal(round(cbotResult.receitaFarelo), 71.412445);
 assert.equal(round(cbotResult.receitaOleo), 59.510371);
 assert.equal(round(cbotResult.margemLiquida), 3.572764);
+
+const cbotWithPremiumPrices = convertToBrlPrices({
+  ...cbotInput,
+  premioSojaUsdPorBushel: 0.8,
+});
+
+assert.equal(round(cbotWithPremiumPrices.sojaAjustadaUsdPorBushel ?? 0), 12.57);
+assert.equal(round(cbotWithPremiumPrices.precoSojaUsdSaca ?? 0), 27.71164);
+assert.equal(round(cbotWithPremiumPrices.precoSojaSaca), 136.005959);
 
 console.log("Cálculos de referência aprovados:", {
   brl: {
@@ -61,6 +72,9 @@ console.log("Cálculos de referência aprovados:", {
   },
   cbot: {
     sojaUsdSaca: cbotPrices.precoSojaUsdSaca,
+    sojaAjustadaUsdBushelComPremio:
+      cbotWithPremiumPrices.sojaAjustadaUsdPorBushel,
+    sojaBrlSacaComPremio: cbotWithPremiumPrices.precoSojaSaca,
     fareloUsdTon: cbotPrices.precoFareloUsdTon,
     oleoUsdTon: cbotPrices.precoOleoUsdTon,
     margemLiquida: cbotResult.margemLiquida,

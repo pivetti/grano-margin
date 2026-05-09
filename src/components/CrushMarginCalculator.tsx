@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   calcularCrushMargin,
+  normalizeCrushMarginInput,
   type CalculationMode,
   type CrushMarginInput,
 } from "@/lib/calcular-crush-margin";
@@ -11,6 +12,7 @@ import {
   formatPercent,
   parseNumberInput,
 } from "@/lib/formatters";
+import { EXTERNAL_MARKET_LINKS } from "@/lib/external-market-links";
 import type { CrushMarginHistoryItem } from "@/types/crush-margin";
 import { Button } from "./Button";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -41,6 +43,7 @@ type NumericField =
   | "precoOleoTon"
   | "cotacaoDolar"
   | "sojaUsdPorBushel"
+  | "premioSojaUsdPorBushel"
   | "fareloUsdPorShortTon"
   | "oleoCentsPorLibra"
   | "kgFareloPorSaca"
@@ -59,6 +62,7 @@ type FieldConfig = {
   prefix?: string;
   suffix?: string;
   helper?: string;
+  placeholder?: string;
 };
 
 type AuthUser = {
@@ -76,6 +80,7 @@ const defaultForm: FormState = {
   precoOleoTon: "6250",
   cotacaoDolar: "4,9079",
   sojaUsdPorBushel: "11,77",
+  premioSojaUsdPorBushel: "0",
   fareloUsdPorShortTon: "320,85",
   oleoCentsPorLibra: "74,10",
   kgFareloPorSaca: "46,8",
@@ -93,13 +98,13 @@ const modeOptions: Array<{
     mode: "CBOT",
     label: "CBOT / Mercado internacional",
     description:
-      "Use soja em US$/bushel, farelo em US$/short ton, oleo em US¢/libra e dolar PTAX.",
+      "Use soja em US$/bushel, premio/desagio, farelo em US$/short ton, oleo em US¢/libra e dolar PTAX.",
   },
   {
     mode: "BRL",
     label: "Precos manuais em R$",
     description:
-      "Use precos finais ja convertidos: soja em R$/saca, farelo em R$/ton e oleo em R$/ton.",
+      "Use precos finais ja convertidos: soja em R$/saca, farelo em R$/ton e oleo em R$/ton, com ajustes ja embutidos.",
   },
 ];
 
@@ -161,7 +166,16 @@ const fieldsByMode: Record<CalculationMode, FieldConfig[]> = {
       prefix: "US$",
       suffix: "bushel",
       helper:
-        "Consulte a fonte externa e informe a soja em US$/bushel. Ex.: 11,77.",
+        "Informe em US$/bushel. Ex.: se a cotacao estiver 1177 cents/bushel, digite 11,77.",
+    },
+    {
+      name: "premioSojaUsdPorBushel",
+      label: "Premio da soja",
+      prefix: "US$",
+      suffix: "bushel",
+      placeholder: "0.00",
+      helper:
+        "Premio ou desagio aplicado sobre a soja CBOT. Pode ser positivo, zero ou negativo. Ex.: 0,80 ou -0,30.",
     },
     {
       name: "fareloUsdPorShortTon",
@@ -181,6 +195,20 @@ const fieldsByMode: Record<CalculationMode, FieldConfig[]> = {
     },
     ...commonFields,
   ],
+};
+
+const cbotExternalQuoteFieldNames: NumericField[] = [
+  "sojaUsdPorBushel",
+  "premioSojaUsdPorBushel",
+  "fareloUsdPorShortTon",
+  "oleoCentsPorLibra",
+];
+
+const cbotExternalQuoteFieldLinks: Partial<Record<NumericField, string>> = {
+  sojaUsdPorBushel: EXTERNAL_MARKET_LINKS.soybeanCbot.url,
+  premioSojaUsdPorBushel: EXTERNAL_MARKET_LINKS.soybeanPremiumParanagua.url,
+  fareloUsdPorShortTon: EXTERNAL_MARKET_LINKS.soybeanMealCbot.url,
+  oleoCentsPorLibra: EXTERNAL_MARKET_LINKS.soybeanOilCbot.url,
 };
 
 function toInputValue(value: number) {
@@ -216,6 +244,10 @@ function buildInput(form: FormState): CrushMarginInput {
     ...base,
     cotacaoDolar: parseFormNumber(form, "cotacaoDolar"),
     sojaUsdPorBushel: parseFormNumber(form, "sojaUsdPorBushel"),
+    premioSojaUsdPorBushel: parseFormNumber(
+      form,
+      "premioSojaUsdPorBushel",
+    ),
     fareloUsdPorShortTon: parseFormNumber(form, "fareloUsdPorShortTon"),
     oleoCentsPorLibra: parseFormNumber(form, "oleoCentsPorLibra"),
   };
@@ -229,6 +261,12 @@ function validateInput(input: CrushMarginInput) {
       errors[field] = "Informe um numero valido.";
     } else if (value < 0) {
       errors[field] = "O valor nao pode ser negativo.";
+    }
+  };
+
+  const markFinite = (field: NumericField, value: number) => {
+    if (!Number.isFinite(value)) {
+      errors[field] = "Informe um numero valido.";
     }
   };
 
@@ -266,6 +304,7 @@ function validateInput(input: CrushMarginInput) {
       "A cotacao do dolar precisa ser maior que zero.",
     );
     markNonNegative("sojaUsdPorBushel", input.sojaUsdPorBushel);
+    markFinite("premioSojaUsdPorBushel", input.premioSojaUsdPorBushel);
     markNonNegative("fareloUsdPorShortTon", input.fareloUsdPorShortTon);
     markNonNegative("oleoCentsPorLibra", input.oleoCentsPorLibra);
   }
@@ -275,10 +314,10 @@ function validateInput(input: CrushMarginInput) {
 
 function getModeDescription(mode: CalculationMode) {
   if (mode === "CBOT") {
-    return "Use soja em US$/bushel, farelo em US$/short ton, oleo em US¢/libra e dolar PTAX. A cotacao do dolar pode ser buscada automaticamente ou sobrescrita manualmente.";
+    return "No modo CBOT, o preco da soja em R$/saca e formado pela cotacao da soja em US$/bushel somada ao premio/desagio, multiplicada pelos bushels equivalentes a uma saca de 60 kg e pela cotacao do dolar.";
   }
 
-  return "Use precos finais ja convertidos: soja em R$/saca, farelo em R$/ton e oleo em R$/ton.";
+  return "No modo BRL, o preco da soja ja deve ser informado em R$/saca. Nesse caso, dolar, premio e demais ajustes ja estao embutidos no preco informado.";
 }
 
 function formFromInput(input: CrushMarginInput, observacoes: string): FormState {
@@ -304,6 +343,7 @@ function formFromInput(input: CrushMarginInput, observacoes: string): FormState 
     ...nextForm,
     cotacaoDolar: toInputValue(input.cotacaoDolar),
     sojaUsdPorBushel: toInputValue(input.sojaUsdPorBushel),
+    premioSojaUsdPorBushel: toInputValue(input.premioSojaUsdPorBushel),
     fareloUsdPorShortTon: toInputValue(input.fareloUsdPorShortTon),
     oleoCentsPorLibra: toInputValue(input.oleoCentsPorLibra),
   };
@@ -375,33 +415,11 @@ function getDolarFieldHelper(
   return defaultHelper;
 }
 
-function normalizeLegacyInput(input: CrushMarginInput): CrushMarginInput {
-  if (input.mode !== "CBOT") {
-    return input;
-  }
-
-  const legacyInput = input as Extract<CrushMarginInput, { mode: "CBOT" }> & {
-    sojaCentsPorBushel?: number;
-  };
-
-  if (
-    typeof legacyInput.sojaUsdPorBushel === "number" &&
-    Number.isFinite(legacyInput.sojaUsdPorBushel)
-  ) {
-    return input;
-  }
-
-  if (
-    typeof legacyInput.sojaCentsPorBushel === "number" &&
-    Number.isFinite(legacyInput.sojaCentsPorBushel)
-  ) {
-    return {
-      ...input,
-      sojaUsdPorBushel: legacyInput.sojaCentsPorBushel / 100,
-    };
-  }
-
-  return input;
+function normalizeHistoryItems(items: CrushMarginHistoryItem[]) {
+  return items.map((item) => ({
+    ...item,
+    input: normalizeCrushMarginInput(item.input),
+  }));
 }
 
 export function CrushMarginCalculator() {
@@ -440,7 +458,11 @@ export function CrushMarginCalculator() {
 
     if (response.ok) {
       const data = await response.json().catch(() => null);
-      setHistory(Array.isArray(data?.historicos) ? data.historicos : []);
+      setHistory(
+        Array.isArray(data?.historicos)
+          ? normalizeHistoryItems(data.historicos)
+          : [],
+      );
     } else {
       setHistory([]);
     }
@@ -469,7 +491,7 @@ export function CrushMarginCalculator() {
       if (currentUser) {
         await loadHistory();
       } else {
-        setHistory(readLocalHistory());
+        setHistory(normalizeHistoryItems(readLocalHistory()));
       }
     }
 
@@ -589,7 +611,9 @@ export function CrushMarginCalculator() {
   }
 
   function loadScenario(item: CrushMarginHistoryItem) {
-    setForm(formFromInput(normalizeLegacyInput(item.input), item.observacoes));
+    setForm(
+      formFromInput(normalizeCrushMarginInput(item.input), item.observacoes),
+    );
     setFeedback("Cenario carregado.");
   }
 
@@ -653,11 +677,7 @@ export function CrushMarginCalculator() {
   const cbotMarketFieldNames: NumericField[] = [
     "cotacaoDolar",
     "sojaUsdPorBushel",
-    "fareloUsdPorShortTon",
-    "oleoCentsPorLibra",
-  ];
-  const cbotExternalQuoteFieldNames: NumericField[] = [
-    "sojaUsdPorBushel",
+    "premioSojaUsdPorBushel",
     "fareloUsdPorShortTon",
     "oleoCentsPorLibra",
   ];
@@ -677,7 +697,7 @@ export function CrushMarginCalculator() {
   return (
     <section
       id="calculadora"
-      className="scroll-mt-16 bg-[var(--background)] py-8 text-[var(--text-primary)] md:scroll-mt-20 md:py-16"
+      className="scroll-mt-16 bg-[var(--background)] pt-4 pb-8 text-[var(--text-primary)] md:scroll-mt-20 md:pt-5 md:pb-16"
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-6">
@@ -690,8 +710,7 @@ export function CrushMarginCalculator() {
             </h2>
           </div>
           <p className="max-w-2xl text-xs leading-5 text-[var(--text-secondary)] md:text-sm md:leading-6">
-            Interface densa, responsiva e orientada a decisao para soja, farelo,
-            oleo, dolar e CBOT.
+            Simulador para calcular a margem entre soja em grao, farelo, oleo, dolar e CBOT.
           </p>
         </div>
 
@@ -758,6 +777,7 @@ export function CrushMarginCalculator() {
                   }
                   prefix={field.prefix}
                   suffix={field.suffix}
+                  placeholder={field.placeholder}
                   action={
                     field.name === "cotacaoDolar" ? (
                       <button
@@ -771,7 +791,10 @@ export function CrushMarginCalculator() {
                     ) : form.mode === "CBOT" &&
                       cbotExternalQuoteFieldNames.includes(field.name) ? (
                       <a
-                        href="#consultar-cotacoes-externas"
+                        href={cbotExternalQuoteFieldLinks[field.name]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Abrir fonte externa para ${field.label}`}
                         className="rounded-md border border-[var(--border-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--brand-dark)] hover:bg-[var(--brand-soft)] hover:text-[var(--text-primary)]"
                       >
                         Buscar cotacao

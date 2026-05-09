@@ -1,16 +1,35 @@
 const benefits = [
   {
     title: "Mesa comercial",
-    text: "Compare cenarios CBOT e precos manuais em reais com leitura rapida de margem e status.",
+    text: "Compare cenários CBOT com prêmio/deságio sobre a CBOT e preços manuais em reais para orientar compra e venda.",
   },
   {
-    title: "Gestao industrial",
-    text: "Padronize rendimentos, custos operacionais e preco maximo de compra para margem zero.",
+    title: "Gestão industrial",
+    text: "Padronize rendimentos de farelo e óleo, custos operacionais e leitura de margem por saca.",
   },
   {
-    title: "Historico da conta",
-    text: "Salve cenarios no perfil do usuario e recupere premissas usadas em simulacoes anteriores.",
+    title: "Preço máximo da soja",
+    text: "Veja o limite de compra para margem zero e reduza decisões baseadas apenas no preço nominal.",
   },
+  {
+    title: "Conversão auditável",
+    text: "Confira soja original, prêmio/deságio, soja ajustada, dólar usado e derivados convertidos para reais.",
+  },
+  {
+    title: "Fontes externas",
+    text: "Acesse links diretos para soja, prêmio Paranaguá, farelo, óleo e preencha os valores manualmente.",
+  },
+  {
+    title: "Histórico da conta",
+    text: "Salve cenários no perfil ou no navegador e recupere premissas usadas em simulações anteriores.",
+  },
+];
+
+const highlights = [
+  "CBOT com prêmio/deságio",
+  "BRL sem ajuste duplicado",
+  "Margem líquida por saca",
+  "Histórico de cenários",
 ];
 
 export function BenefitsSection() {
@@ -25,11 +44,27 @@ export function BenefitsSection() {
             SaaS B2B para agroindustria
           </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-[var(--text-primary)] md:mt-3 md:text-4xl">
-            Baixo ruido visual, alta densidade de decisao.
+            Menos ruído na cotação, mais clareza na decisão.
           </h2>
+          <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)] md:mt-4 md:text-base md:leading-7">
+            O fluxo concentra premissas comerciais e industriais em uma leitura
+            única: entrada da soja, receita dos derivados, custo operacional,
+            margem líquida e limite de compra.
+          </p>
         </div>
 
-        <div className="mt-5 grid gap-3 md:mt-8 md:grid-cols-3 md:gap-4">
+        <div className="mt-5 flex flex-wrap gap-2 md:mt-6">
+          {highlights.map((highlight) => (
+            <span
+              key={highlight}
+              className="rounded-md border border-[var(--border-soft)] bg-[var(--background-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--text-secondary)]"
+            >
+              {highlight}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-5 grid gap-3 md:mt-8 md:grid-cols-2 lg:grid-cols-3 md:gap-4">
           {benefits.map((benefit) => (
             <article
               key={benefit.title}
@@ -38,7 +73,7 @@ export function BenefitsSection() {
               <h3 className="text-sm font-semibold tracking-tight text-[var(--text-primary)] md:text-lg">
                 {benefit.title}
               </h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--text-secondary)] md:mt-3 md:line-clamp-none md:text-sm md:leading-6">
+              <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)] md:mt-3 md:text-sm md:leading-6">
                 {benefit.text}
               </p>
             </article>
