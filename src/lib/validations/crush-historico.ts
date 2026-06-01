@@ -15,6 +15,8 @@ const nonNegativeNumber = finiteNumber.refine(
   "O valor nao pode ser negativo.",
 );
 
+const optionalNonNegativeNumber = nonNegativeNumber.optional().default(0);
+
 const baseInputSchema = {
   kgFareloPorSaca: positiveNumber,
   kgOleoPorSaca: positiveNumber,
@@ -28,6 +30,7 @@ export const crushMarginInputSchema = z.discriminatedUnion("mode", [
     precoSojaSaca: nonNegativeNumber,
     precoFareloTon: nonNegativeNumber,
     precoOleoTon: nonNegativeNumber,
+    comissaoCorretorPercentual: optionalNonNegativeNumber,
   }),
   z.object({
     mode: z.literal("CBOT"),
@@ -37,6 +40,12 @@ export const crushMarginInputSchema = z.discriminatedUnion("mode", [
     premioSojaUsdPorBushel: finiteNumber.default(0),
     fareloUsdPorShortTon: nonNegativeNumber,
     oleoCentsPorLibra: nonNegativeNumber,
+    freteFareloPorTon: optionalNonNegativeNumber,
+    freteOleoPorTon: optionalNonNegativeNumber,
+    servicosPortuariosPorTon: optionalNonNegativeNumber,
+    taxaPortuariaPorTon: optionalNonNegativeNumber,
+    comissaoVendedorFareloPercentual: optionalNonNegativeNumber,
+    comissaoVendedorOleoPercentual: optionalNonNegativeNumber,
   }),
 ]);
 
