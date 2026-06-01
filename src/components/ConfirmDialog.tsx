@@ -40,11 +40,11 @@ export function ConfirmDialog({
         <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">
           {description}
         </p>
-        <div className="mt-5 flex justify-end gap-3">
-          <Button variant="subtle" onClick={onCancel}>
+        <div className="mt-5 grid gap-2 sm:flex sm:justify-end sm:gap-3">
+          <Button className="w-full sm:w-auto" variant="subtle" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button variant="danger" onClick={onConfirm}>
+          <Button className="w-full sm:w-auto" variant="danger" onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

@@ -5,13 +5,15 @@ export function FormulaExplainer() {
         Formula preservada
       </p>
       <div className="mt-3 space-y-2 text-sm leading-6 text-[var(--text-secondary)]">
-        <p>
+        <p className="break-words">
           Receita farelo = preco farelo ton x kg farelo por saca / 1000.
         </p>
-        <p>Receita oleo = preco oleo ton x kg oleo por saca / 1000.</p>
-        <p>
+        <p className="break-words">
+          Receita oleo = preco oleo ton x kg oleo por saca / 1000.
+        </p>
+        <p className="break-words">
           Margem liquida = receita farelo + receita oleo - preco soja saca -
-          custos operacionais por saca.
+          custos operacionais por saca - custos comerciais/logisticos.
         </p>
       </div>
     </div>

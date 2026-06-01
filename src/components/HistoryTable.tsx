@@ -11,7 +11,6 @@ import { StatusBadge } from "./StatusBadge";
 
 type HistoryTableProps = {
   items: CrushMarginHistoryItem[];
-  isAuthenticated: boolean;
   isLoading: boolean;
   onClear: () => void;
   onDelete: (item: CrushMarginHistoryItem) => void;
@@ -43,24 +42,8 @@ function getModeLabel(mode: CalculationMode) {
   return "Precos manuais em R$";
 }
 
-function getEmptyCopy(isAuthenticated: boolean) {
-  if (!isAuthenticated) {
-    return {
-      title: "Nenhum cenario local salvo ainda",
-      description:
-        "Salve uma simulacao para manter o cenario neste navegador. Para salvar no banco, faca login.",
-    };
-  }
-
-  return {
-    title: "Nenhum cenario salvo ainda",
-    description: "Salve uma simulacao para criar seu historico da conta.",
-  };
-}
-
 export function HistoryTable({
   items,
-  isAuthenticated,
   isLoading,
   onClear,
   onDelete,
@@ -103,28 +86,25 @@ export function HistoryTable({
       });
   }, [items, modeFilter, search, sortBy, statusFilter]);
 
-  const emptyCopy = getEmptyCopy(isAuthenticated);
-
   return (
-    <section id="historico" className="scroll-mt-20">
+    <section id="historico" className="scroll-mt-24 md:scroll-mt-20">
       <div className="flex flex-col gap-3 border-t border-[var(--border-soft)] pt-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
             Historico
           </p>
           <h3 className="mt-1 text-2xl font-semibold tracking-tight text-[var(--text-primary)]">
-            {isAuthenticated ? "Historico da conta" : "Historico local"}
+            Historico local
           </h3>
           <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            {isAuthenticated
-              ? "Ultimos cenarios salvos no seu perfil."
-              : "Ultimos cenarios salvos no cache deste navegador."}
+            Ultimos cenarios salvos no cache deste navegador.
           </p>
         </div>
         <Button
           onClick={onClear}
           disabled={isLoading || items.length === 0}
           variant="danger"
+          className="w-full sm:w-auto"
         >
           Limpar historico
         </Button>
@@ -200,8 +180,8 @@ export function HistoryTable({
       ) : items.length === 0 ? (
         <div className="mt-4 md:mt-5">
           <EmptyState
-            title={emptyCopy.title}
-            description={emptyCopy.description}
+            title="Nenhum cenario local salvo ainda"
+            description="Salve uma simulacao para manter o cenario neste navegador."
           />
         </div>
       ) : (
@@ -218,8 +198,8 @@ export function HistoryTable({
                   key={item.id}
                   className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] p-4"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="text-xs text-[var(--text-muted)]">
                         {formatDateTime(item.createdAt)}
                       </p>
@@ -227,40 +207,42 @@ export function HistoryTable({
                         {getModeLabel(item.input.mode)}
                       </p>
                     </div>
-                    <StatusBadge
-                      status={item.result.status}
-                      label={item.result.statusLabel}
-                    />
+                    <div className="self-start">
+                      <StatusBadge
+                        status={item.result.status}
+                        label={item.result.statusLabel}
+                      />
+                    </div>
                   </div>
 
                   <p className="mt-3 line-clamp-2 text-sm text-[var(--text-secondary)]">
                     {item.observacoes || "Sem observacao"}
                   </p>
 
-                  <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--border-soft)] pt-3">
-                    <div>
+                  <div className="mt-4 grid grid-cols-1 gap-2 border-t border-[var(--border-soft)] pt-3 sm:grid-cols-3">
+                    <div className="rounded-md bg-[var(--background-soft)] p-2">
                       <p className="text-xs text-[var(--text-muted)]">
                         Margem
                       </p>
-                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                      <p className="gm-number mt-1 break-words text-sm font-semibold text-[var(--text-primary)]">
                         {formatCurrencyBRL(item.result.margemLiquida)}
                       </p>
                     </div>
-                    <div>
+                    <div className="rounded-md bg-[var(--background-soft)] p-2">
                       <p className="text-xs text-[var(--text-muted)]">
                         % custo
                       </p>
-                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                      <p className="gm-number mt-1 break-words text-sm font-semibold text-[var(--text-primary)]">
                         {formatPercent(
                           item.result.margemPercentualSobreCusto,
                         )}
                       </p>
                     </div>
-                    <div>
+                    <div className="rounded-md bg-[var(--background-soft)] p-2">
                       <p className="text-xs text-[var(--text-muted)]">
                         Soja max.
                       </p>
-                      <p className="gm-number mt-1 text-sm font-semibold text-[var(--text-primary)]">
+                      <p className="gm-number mt-1 break-words text-sm font-semibold text-[var(--text-primary)]">
                         {formatCurrencyBRL(
                           item.result.precoMaximoSojaParaMargemZero,
                         )}

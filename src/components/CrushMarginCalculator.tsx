@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   calcularCrushMargin,
   normalizeCrushMarginInput,
   type CalculationMode,
   type CrushMarginInput,
+  type CrushMarginResult,
 } from "@/lib/calcular-crush-margin";
 import {
   formatCurrencyBRL,
@@ -48,7 +49,14 @@ type NumericField =
   | "oleoCentsPorLibra"
   | "kgFareloPorSaca"
   | "kgOleoPorSaca"
-  | "custosOperacionaisPorSaca";
+  | "custosOperacionaisPorSaca"
+  | "freteFareloPorTon"
+  | "freteOleoPorTon"
+  | "servicosPortuariosPorTon"
+  | "taxaPortuariaPorTon"
+  | "comissaoVendedorFareloPercentual"
+  | "comissaoVendedorOleoPercentual"
+  | "comissaoCorretorPercentual";
 
 type FieldErrors = Partial<Record<NumericField, string>>;
 type FormState = Record<NumericField, string> & {
@@ -65,27 +73,28 @@ type FieldConfig = {
   placeholder?: string;
 };
 
-type AuthUser = {
-  id: string;
-  nome: string;
-  email: string;
-};
-
 const LOCAL_HISTORY_KEY = "granomargin:local-history";
 
 const defaultForm: FormState = {
   mode: "CBOT",
-  precoSojaSaca: "127,38",
-  precoFareloTon: "1670",
-  precoOleoTon: "6250",
-  cotacaoDolar: "4,9079",
-  sojaUsdPorBushel: "11,77",
-  premioSojaUsdPorBushel: "0",
-  fareloUsdPorShortTon: "320,85",
-  oleoCentsPorLibra: "74,10",
-  kgFareloPorSaca: "46,8",
-  kgOleoPorSaca: "11,4",
+  precoSojaSaca: "0",
+  precoFareloTon: "0",
+  precoOleoTon: "0",
+  cotacaoDolar: "",
+  sojaUsdPorBushel: "",
+  premioSojaUsdPorBushel: "",
+  fareloUsdPorShortTon: "",
+  oleoCentsPorLibra: "",
+  kgFareloPorSaca: "0",
+  kgOleoPorSaca: "0",
   custosOperacionaisPorSaca: "0",
+  freteFareloPorTon: "0",
+  freteOleoPorTon: "0",
+  servicosPortuariosPorTon: "0",
+  taxaPortuariaPorTon: "0",
+  comissaoVendedorFareloPercentual: "0",
+  comissaoVendedorOleoPercentual: "0",
+  comissaoCorretorPercentual: "0",
   observacoes: "",
 };
 
@@ -130,6 +139,51 @@ const commonFields: FieldConfig[] = [
   },
 ];
 
+const cbotOperationalCostFields: FieldConfig[] = [
+  {
+    name: "freteFareloPorTon",
+    label: "Frete do farelo",
+    prefix: "R$",
+    suffix: "ton",
+  },
+  {
+    name: "freteOleoPorTon",
+    label: "Frete do oleo",
+    prefix: "R$",
+    suffix: "ton",
+  },
+  {
+    name: "servicosPortuariosPorTon",
+    label: "Servicos portuarios",
+    prefix: "R$",
+    suffix: "ton",
+  },
+  {
+    name: "taxaPortuariaPorTon",
+    label: "Taxa portuaria",
+    prefix: "R$",
+    suffix: "ton",
+  },
+  {
+    name: "comissaoVendedorFareloPercentual",
+    label: "Comissao vendedor farelo",
+    suffix: "%",
+  },
+  {
+    name: "comissaoVendedorOleoPercentual",
+    label: "Comissao vendedor oleo",
+    suffix: "%",
+  },
+];
+
+const brlCommercialFields: FieldConfig[] = [
+  {
+    name: "comissaoCorretorPercentual",
+    label: "Comissao corretor",
+    suffix: "%",
+  },
+];
+
 const fieldsByMode: Record<CalculationMode, FieldConfig[]> = {
   BRL: [
     {
@@ -151,6 +205,7 @@ const fieldsByMode: Record<CalculationMode, FieldConfig[]> = {
       suffix: "ton",
     },
     ...commonFields,
+    ...brlCommercialFields,
   ],
   CBOT: [
     {
@@ -194,6 +249,7 @@ const fieldsByMode: Record<CalculationMode, FieldConfig[]> = {
         "Consulte a fonte externa e informe o oleo em centavos de dolar por libra. Ex.: 74,10.",
     },
     ...commonFields,
+    ...cbotOperationalCostFields,
   ],
 };
 
@@ -213,6 +269,12 @@ const cbotExternalQuoteFieldLinks: Partial<Record<NumericField, string>> = {
 
 function toInputValue(value: number) {
   return String(value).replace(".", ",");
+}
+
+function toInputValueOrZero(value: unknown) {
+  return toInputValue(
+    typeof value === "number" && Number.isFinite(value) ? value : 0,
+  );
 }
 
 function parseFormNumber(form: FormState, field: NumericField) {
@@ -236,6 +298,10 @@ function buildInput(form: FormState): CrushMarginInput {
       precoSojaSaca: parseFormNumber(form, "precoSojaSaca"),
       precoFareloTon: parseFormNumber(form, "precoFareloTon"),
       precoOleoTon: parseFormNumber(form, "precoOleoTon"),
+      comissaoCorretorPercentual: parseFormNumber(
+        form,
+        "comissaoCorretorPercentual",
+      ),
     };
   }
 
@@ -250,6 +316,21 @@ function buildInput(form: FormState): CrushMarginInput {
     ),
     fareloUsdPorShortTon: parseFormNumber(form, "fareloUsdPorShortTon"),
     oleoCentsPorLibra: parseFormNumber(form, "oleoCentsPorLibra"),
+    freteFareloPorTon: parseFormNumber(form, "freteFareloPorTon"),
+    freteOleoPorTon: parseFormNumber(form, "freteOleoPorTon"),
+    servicosPortuariosPorTon: parseFormNumber(
+      form,
+      "servicosPortuariosPorTon",
+    ),
+    taxaPortuariaPorTon: parseFormNumber(form, "taxaPortuariaPorTon"),
+    comissaoVendedorFareloPercentual: parseFormNumber(
+      form,
+      "comissaoVendedorFareloPercentual",
+    ),
+    comissaoVendedorOleoPercentual: parseFormNumber(
+      form,
+      "comissaoVendedorOleoPercentual",
+    ),
   };
 }
 
@@ -297,6 +378,10 @@ function validateInput(input: CrushMarginInput) {
     markNonNegative("precoSojaSaca", input.precoSojaSaca);
     markNonNegative("precoFareloTon", input.precoFareloTon);
     markNonNegative("precoOleoTon", input.precoOleoTon);
+    markNonNegative(
+      "comissaoCorretorPercentual",
+      input.comissaoCorretorPercentual ?? 0,
+    );
   } else {
     markPositive(
       "cotacaoDolar",
@@ -307,6 +392,21 @@ function validateInput(input: CrushMarginInput) {
     markFinite("premioSojaUsdPorBushel", input.premioSojaUsdPorBushel);
     markNonNegative("fareloUsdPorShortTon", input.fareloUsdPorShortTon);
     markNonNegative("oleoCentsPorLibra", input.oleoCentsPorLibra);
+    markNonNegative("freteFareloPorTon", input.freteFareloPorTon ?? 0);
+    markNonNegative("freteOleoPorTon", input.freteOleoPorTon ?? 0);
+    markNonNegative(
+      "servicosPortuariosPorTon",
+      input.servicosPortuariosPorTon ?? 0,
+    );
+    markNonNegative("taxaPortuariaPorTon", input.taxaPortuariaPorTon ?? 0);
+    markNonNegative(
+      "comissaoVendedorFareloPercentual",
+      input.comissaoVendedorFareloPercentual ?? 0,
+    );
+    markNonNegative(
+      "comissaoVendedorOleoPercentual",
+      input.comissaoVendedorOleoPercentual ?? 0,
+    );
   }
 
   return errors;
@@ -336,6 +436,9 @@ function formFromInput(input: CrushMarginInput, observacoes: string): FormState 
       precoSojaSaca: toInputValue(input.precoSojaSaca),
       precoFareloTon: toInputValue(input.precoFareloTon),
       precoOleoTon: toInputValue(input.precoOleoTon),
+      comissaoCorretorPercentual: toInputValueOrZero(
+        input.comissaoCorretorPercentual,
+      ),
     };
   }
 
@@ -346,6 +449,18 @@ function formFromInput(input: CrushMarginInput, observacoes: string): FormState 
     premioSojaUsdPorBushel: toInputValue(input.premioSojaUsdPorBushel),
     fareloUsdPorShortTon: toInputValue(input.fareloUsdPorShortTon),
     oleoCentsPorLibra: toInputValue(input.oleoCentsPorLibra),
+    freteFareloPorTon: toInputValueOrZero(input.freteFareloPorTon),
+    freteOleoPorTon: toInputValueOrZero(input.freteOleoPorTon),
+    servicosPortuariosPorTon: toInputValueOrZero(
+      input.servicosPortuariosPorTon,
+    ),
+    taxaPortuariaPorTon: toInputValueOrZero(input.taxaPortuariaPorTon),
+    comissaoVendedorFareloPercentual: toInputValueOrZero(
+      input.comissaoVendedorFareloPercentual,
+    ),
+    comissaoVendedorOleoPercentual: toInputValueOrZero(
+      input.comissaoVendedorOleoPercentual,
+    ),
   };
 }
 
@@ -422,13 +537,29 @@ function normalizeHistoryItems(items: CrushMarginHistoryItem[]) {
   }));
 }
 
+function getCommercialDiscountRows(result: CrushMarginResult) {
+  const descontos = result.descontosComerciais;
+
+  return [
+    { label: "Frete farelo", value: descontos.freteFarelo },
+    { label: "Frete oleo", value: descontos.freteOleo },
+    { label: "Servicos portuarios", value: descontos.servicosPortuarios },
+    { label: "Taxa portuaria", value: descontos.taxaPortuaria },
+    {
+      label: "Comissao vendedor farelo",
+      value: descontos.comissaoVendedorFarelo,
+    },
+    {
+      label: "Comissao vendedor oleo",
+      value: descontos.comissaoVendedorOleo,
+    },
+    { label: "Comissao corretor", value: descontos.comissaoCorretor },
+  ];
+}
+
 export function CrushMarginCalculator() {
   const [form, setForm] = useState<FormState>(defaultForm);
   const [history, setHistory] = useState<CrushMarginHistoryItem[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [authLoaded, setAuthLoaded] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [dolarLoading, setDolarLoading] = useState(false);
@@ -448,59 +579,13 @@ export function CrushMarginCalculator() {
     };
   }, [form]);
 
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
-
-    const response = await fetch("/api/crush-historicos", {
-      method: "GET",
-      cache: "no-store",
-    });
-
-    if (response.ok) {
-      const data = await response.json().catch(() => null);
-      setHistory(
-        Array.isArray(data?.historicos)
-          ? normalizeHistoryItems(data.historicos)
-          : [],
-      );
-    } else {
-      setHistory([]);
-    }
-
-    setHistoryLoading(false);
-  }, []);
-
   useEffect(() => {
-    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      setHistory(normalizeHistoryItems(readLocalHistory()));
+    }, 0);
 
-    async function loadSession() {
-      const response = await fetch("/api/auth/me", {
-        method: "GET",
-        cache: "no-store",
-      });
-      const data = await response.json().catch(() => null);
-      const currentUser = data?.user ?? null;
-
-      if (cancelled) {
-        return;
-      }
-
-      setUser(currentUser);
-      setAuthLoaded(true);
-
-      if (currentUser) {
-        await loadHistory();
-      } else {
-        setHistory(normalizeHistoryItems(readLocalHistory()));
-      }
-    }
-
-    void loadSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [loadHistory]);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   function updateField(name: NumericField | "observacoes", value: string) {
     setForm((current) => ({
@@ -559,55 +644,25 @@ export function CrushMarginCalculator() {
     }
   }
 
-  async function saveScenario() {
+  function saveScenario() {
     if (!calculation.result) {
       return;
     }
 
-    if (!user) {
-      const localScenario: CrushMarginHistoryItem = {
-        id: createLocalId(),
-        createdAt: new Date().toISOString(),
-        observacoes: form.observacoes.trim(),
-        input: calculation.input,
-        result: calculation.result,
-      };
+    const localScenario: CrushMarginHistoryItem = {
+      id: createLocalId(),
+      createdAt: new Date().toISOString(),
+      observacoes: form.observacoes.trim(),
+      input: calculation.input,
+      result: calculation.result,
+    };
 
-      setHistory((current) => {
-        const nextHistory = [localScenario, ...current].slice(0, 50);
-        writeLocalHistory(nextHistory);
-        return nextHistory;
-      });
-      setFeedback(
-        "Cenario salvo no cache deste navegador. Faca login para salvar no banco.",
-      );
-      return;
-    }
-
-    setSaving(true);
-    setFeedback("");
-
-    const response = await fetch("/api/crush-historicos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        observacao: form.observacoes.trim(),
-        input: calculation.input,
-      }),
+    setHistory((current) => {
+      const nextHistory = [localScenario, ...current].slice(0, 50);
+      writeLocalHistory(nextHistory);
+      return nextHistory;
     });
-
-    const data = await response.json().catch(() => null);
-    setSaving(false);
-
-    if (!response.ok) {
-      setFeedback(data?.error ?? "Nao foi possivel salvar o cenario.");
-      return;
-    }
-
-    if (data?.historico) {
-      setHistory((current) => [data.historico, ...current].slice(0, 50));
-      setFeedback("Cenario salvo no historico da conta.");
-    }
+    setFeedback("Cenario salvo no historico local.");
   }
 
   function loadScenario(item: CrushMarginHistoryItem) {
@@ -617,59 +672,26 @@ export function CrushMarginCalculator() {
     setFeedback("Cenario carregado.");
   }
 
-  async function deleteScenario(item: CrushMarginHistoryItem) {
-    if (!user) {
-      setHistory((current) => {
-        const nextHistory = current.filter(
-          (historyItem) => historyItem.id !== item.id,
-        );
-        writeLocalHistory(nextHistory);
-        return nextHistory;
-      });
-      setFeedback("Cenario local excluido.");
-      return;
-    }
-
-    const response = await fetch(`/api/crush-historicos/${item.id}`, {
-      method: "DELETE",
+  function deleteScenario(item: CrushMarginHistoryItem) {
+    setHistory((current) => {
+      const nextHistory = current.filter(
+        (historyItem) => historyItem.id !== item.id,
+      );
+      writeLocalHistory(nextHistory);
+      return nextHistory;
     });
-
-    if (!response.ok) {
-      setFeedback("Nao foi possivel excluir o cenario.");
-      return;
-    }
-
-    setHistory((current) =>
-      current.filter((historyItem) => historyItem.id !== item.id),
-    );
-    setFeedback("Cenario excluido.");
+    setFeedback("Cenario local excluido.");
   }
 
-  async function clearHistory() {
+  function clearHistory() {
     if (history.length === 0) {
       return;
     }
 
     setClearDialogOpen(false);
-
-    if (!user) {
-      writeLocalHistory([]);
-      setHistory([]);
-      setFeedback("Historico local limpo.");
-      return;
-    }
-
-    const response = await fetch("/api/crush-historicos", {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      setFeedback("Nao foi possivel limpar o historico.");
-      return;
-    }
-
+    writeLocalHistory([]);
     setHistory([]);
-    setFeedback("Historico limpo.");
+    setFeedback("Historico local limpo.");
   }
 
   const result = calculation.result;
@@ -693,11 +715,14 @@ export function CrushMarginCalculator() {
           (field) => !cbotMarketFieldNames.includes(field.name),
         )
       : [];
+  const commercialDiscountRows = result
+    ? getCommercialDiscountRows(result)
+    : [];
 
   return (
     <section
       id="calculadora"
-      className="scroll-mt-16 bg-[var(--background)] pt-4 pb-8 text-[var(--text-primary)] md:scroll-mt-20 md:pt-5 md:pb-16"
+      className="scroll-mt-24 bg-[var(--background)] pt-4 pb-8 text-[var(--text-primary)] md:scroll-mt-20 md:pt-5 md:pb-16"
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between md:mb-6">
@@ -725,7 +750,11 @@ export function CrushMarginCalculator() {
                   {getModeDescription(form.mode)}
                 </p>
               </div>
-              <Button onClick={resetDefaults} variant="subtle">
+              <Button
+                onClick={resetDefaults}
+                variant="subtle"
+                className="w-full sm:w-auto"
+              >
                 Restaurar padrao
               </Button>
             </div>
@@ -784,7 +813,7 @@ export function CrushMarginCalculator() {
                         type="button"
                         onClick={fetchDolarRate}
                         disabled={dolarLoading}
-                        className="rounded-md border border-[var(--border-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--brand-dark)] hover:bg-[var(--brand-soft)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                        className="inline-flex min-h-8 w-full items-center justify-center whitespace-nowrap rounded-md border border-[var(--border-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--brand-dark)] hover:bg-[var(--brand-soft)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                       >
                         {dolarLoading ? "Carregando..." : "Carregar cotacao"}
                       </button>
@@ -795,7 +824,7 @@ export function CrushMarginCalculator() {
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Abrir fonte externa para ${field.label}`}
-                        className="rounded-md border border-[var(--border-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--brand-dark)] hover:bg-[var(--brand-soft)] hover:text-[var(--text-primary)]"
+                        className="inline-flex min-h-8 w-full items-center justify-center whitespace-nowrap rounded-md border border-[var(--border-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--text-secondary)] transition hover:border-[var(--brand-dark)] hover:bg-[var(--brand-soft)] hover:text-[var(--text-primary)] sm:w-auto"
                       >
                         Buscar cotacao
                       </a>
@@ -845,27 +874,6 @@ export function CrushMarginCalculator() {
 
             <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start md:mt-6">
               <div className="space-y-3">
-                {authLoaded && !user ? (
-                  <div className="rounded-lg border border-[var(--warning)]/30 bg-[#20180c] p-3 text-xs leading-5 text-amber-100 md:p-4 md:text-sm md:leading-6">
-                    Sem login, este cenario fica salvo apenas no cache deste
-                    navegador. Para salvar no banco e acessar em outros
-                    dispositivos, faca login.
-                    <div className="mt-3 flex gap-2">
-                      <a
-                        href="/login"
-                        className="rounded-md border border-amber-100/30 px-3 py-2 text-xs font-bold transition hover:bg-amber-200/10"
-                      >
-                        Login
-                      </a>
-                      <a
-                        href="/cadastro"
-                        className="rounded-md bg-[var(--warning)] px-3 py-2 text-xs font-bold text-[#120d05] transition hover:bg-amber-300"
-                      >
-                        Cadastro
-                      </a>
-                    </div>
-                  </div>
-                ) : null}
                 {!calculation.isValid ? (
                   <p className="text-sm text-red-300">
                     Corrija os campos destacados para calcular e salvar.
@@ -874,20 +882,14 @@ export function CrushMarginCalculator() {
                 <Toast message={feedback} />
               </div>
 
-              {authLoaded ? (
-                <Button
-                  onClick={saveScenario}
-                  disabled={!calculation.isValid || saving}
-                  variant="primary"
-                  className="w-full lg:w-auto"
-                >
-                  {saving
-                    ? "Salvando..."
-                    : user
-                      ? "Salvar cenario"
-                      : "Salvar no navegador"}
-                </Button>
-              ) : null}
+              <Button
+                onClick={saveScenario}
+                disabled={!calculation.isValid}
+                variant="primary"
+                className="w-full lg:w-auto"
+              >
+                Salvar cenario
+              </Button>
             </div>
           </div>
 
@@ -895,26 +897,28 @@ export function CrushMarginCalculator() {
             {result ? (
               <>
                 <div className="gm-panel-elevated rounded-lg p-4 md:p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
                         Margem liquida
                       </p>
-                      <p className="gm-number mt-2 text-3xl font-semibold tracking-tight text-[var(--text-primary)] md:mt-3 md:text-4xl">
+                      <p className="gm-number mt-2 break-words text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl md:mt-3 md:text-4xl">
                         {formatCurrencyBRL(result.margemLiquida)}
                       </p>
                     </div>
-                    <StatusBadge
-                      status={result.status}
-                      label={result.statusLabel}
-                    />
+                    <div className="self-start">
+                      <StatusBadge
+                        status={result.status}
+                        label={result.statusLabel}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--border-soft)] pt-3 md:mt-5 md:pt-4">
+                  <div className="mt-4 grid grid-cols-1 gap-3 border-t border-[var(--border-soft)] pt-3 sm:grid-cols-2 md:mt-5 md:pt-4">
                     <div>
                       <p className="text-xs text-[var(--text-muted)]">
                         % sobre custo
                       </p>
-                      <p className="gm-number mt-1 text-lg font-semibold text-[var(--text-primary)] md:text-xl">
+                      <p className="gm-number mt-1 break-words text-lg font-semibold text-[var(--text-primary)] md:text-xl">
                         {formatPercent(result.margemPercentualSobreCusto)}
                       </p>
                     </div>
@@ -922,7 +926,7 @@ export function CrushMarginCalculator() {
                       <p className="text-xs text-[var(--text-muted)]">
                         Soja maxima
                       </p>
-                      <p className="gm-number mt-1 text-lg font-semibold text-[var(--text-primary)] md:text-xl">
+                      <p className="gm-number mt-1 break-words text-lg font-semibold text-[var(--text-primary)] md:text-xl">
                         {formatCurrencyBRL(
                           result.precoMaximoSojaParaMargemZero,
                         )}
@@ -931,7 +935,7 @@ export function CrushMarginCalculator() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 xl:grid-cols-1">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                   <ResultCard
                     label="Receita farelo"
                     value={formatCurrencyBRL(result.receitaFarelo)}
@@ -952,10 +956,41 @@ export function CrushMarginCalculator() {
                   <ResultCard
                     label="Custo total"
                     value={formatCurrencyBRL(result.custoTotal)}
-                    helper="Preco da soja + custos operacionais."
+                    helper="Preco da soja + custos operacionais + custos comerciais/logisticos."
                     tone="neutral"
                   />
                 </div>
+
+                {result.descontosComerciaisTotal > 0 ? (
+                  <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--surface)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                      Descontos comerciais/logisticos
+                    </p>
+                    <div className="mt-3 divide-y divide-[var(--border-soft)]">
+                      {commercialDiscountRows.map((row) => (
+                        <div
+                          key={row.label}
+                          className="flex flex-col gap-1 py-2 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                        >
+                          <span className="text-[var(--text-secondary)]">
+                            {row.label}
+                          </span>
+                          <span className="gm-number break-words font-semibold text-[var(--text-primary)]">
+                            {formatCurrencyBRL(row.value)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="flex flex-col gap-1 pt-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                        <span className="font-semibold text-[var(--text-primary)]">
+                          Total de descontos comerciais
+                        </span>
+                        <span className="gm-number break-words font-semibold text-[var(--brand)]">
+                          {formatCurrencyBRL(result.descontosComerciaisTotal)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </>
             ) : (
               <div className="rounded-lg border border-red-400/30 bg-red-400/10 p-5">
@@ -991,8 +1026,7 @@ export function CrushMarginCalculator() {
         <div className="mt-7 md:mt-10">
           <HistoryTable
             items={history}
-            isAuthenticated={Boolean(user)}
-            isLoading={historyLoading}
+            isLoading={false}
             onClear={() => setClearDialogOpen(true)}
             onDelete={deleteScenario}
             onLoad={loadScenario}
@@ -1002,12 +1036,8 @@ export function CrushMarginCalculator() {
 
       <ConfirmDialog
         open={clearDialogOpen}
-        title={user ? "Limpar historico da conta?" : "Limpar historico local?"}
-        description={
-          user
-            ? "Esta acao remove todos os cenarios salvos no seu perfil."
-            : "Esta acao remove os cenarios salvos apenas neste navegador."
-        }
+        title="Limpar historico local?"
+        description="Esta acao remove os cenarios salvos apenas neste navegador."
         confirmLabel="Limpar historico"
         onCancel={() => setClearDialogOpen(false)}
         onConfirm={clearHistory}

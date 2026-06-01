@@ -13,7 +13,7 @@ export function ExternalMarketLinks({
     <section
       id="consultar-cotacoes-externas"
       className={[
-        "scroll-mt-24 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] p-4",
+        "scroll-mt-24 rounded-lg border border-[var(--border-soft)] bg-[var(--background-soft)] p-4 md:scroll-mt-20",
         className,
       ].join(" ")}
     >

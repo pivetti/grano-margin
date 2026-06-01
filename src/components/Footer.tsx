@@ -5,9 +5,7 @@ export function Footer() {
         <p className="font-semibold text-[var(--text-primary)]">
           Copyright (c) 2026 Henrique Belgrovicz Pivetti. All rights reserved.
         </p>
-        <p>
-          Historico da conta salvo no perfil do usuario com sessao segura.
-        </p>
+        <p>Historico salvo localmente neste navegador.</p>
       </div>
     </footer>
   );

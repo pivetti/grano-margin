@@ -22,14 +22,14 @@ export function MetricCard({
   return (
     <article
       className={[
-        "rounded-lg border border-[var(--border-soft)] bg-gradient-to-b to-transparent p-4 transition duration-200 hover:border-[var(--border)]",
+        "rounded-lg border border-[var(--border-soft)] bg-gradient-to-b to-transparent p-3 transition duration-200 hover:border-[var(--border)] md:p-4",
         accentClasses[accent],
       ].join(" ")}
     >
-      <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]">
+      <p className="text-xs font-medium uppercase leading-5 tracking-[0.08em] text-[var(--text-muted)]">
         {label}
       </p>
-      <p className="gm-number mt-2 text-2xl font-semibold leading-tight text-[var(--text-primary)]">
+      <p className="gm-number mt-2 break-words text-xl font-semibold leading-tight text-[var(--text-primary)] sm:text-2xl">
         {value}
       </p>
       {helper ? (

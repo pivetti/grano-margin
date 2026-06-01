@@ -27,18 +27,18 @@ export function InputField({
 }: InputFieldProps) {
   return (
     <div>
-      <div className="flex min-h-6 items-center justify-between gap-2">
+      <div className="flex min-h-6 flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         <label
           htmlFor={id}
-          className="block text-sm font-semibold text-[var(--text-primary)]"
+          className="block min-w-0 text-sm font-semibold text-[var(--text-primary)]"
         >
           {label}
         </label>
-        {action ? <div className="shrink-0">{action}</div> : null}
+        {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
       </div>
       <div className="mt-1.5 flex min-h-11 rounded-md border border-[var(--border-soft)] bg-[var(--background-soft)] transition duration-200 focus-within:border-[var(--brand)] focus-within:bg-[var(--surface)] focus-within:shadow-[var(--focus-ring)] md:mt-2">
         {prefix ? (
-          <span className="flex min-w-12 items-center justify-center border-r border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">
+          <span className="flex min-w-12 shrink-0 items-center justify-center border-r border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">
             {prefix}
           </span>
         ) : null}
@@ -51,7 +51,7 @@ export function InputField({
           placeholder={placeholder}
         />
         {suffix ? (
-          <span className="flex items-center border-l border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">
+          <span className="flex shrink-0 items-center border-l border-[var(--border-soft)] px-3 text-sm font-medium text-[var(--text-secondary)]">
             {suffix}
           </span>
         ) : null}

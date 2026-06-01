@@ -20,8 +20,8 @@ const benefits = [
     text: "Acesse links diretos para soja, prêmio Paranaguá, farelo, óleo e preencha os valores manualmente.",
   },
   {
-    title: "Histórico da conta",
-    text: "Salve cenários no perfil ou no navegador e recupere premissas usadas em simulações anteriores.",
+    title: "Histórico local",
+    text: "Salve cenários no navegador e recupere premissas usadas em simulações anteriores.",
   },
 ];
 
@@ -36,7 +36,7 @@ export function BenefitsSection() {
   return (
     <section
       id="beneficios"
-      className="scroll-mt-20 bg-[var(--background)] py-8 md:py-20"
+      className="scroll-mt-24 bg-[var(--background)] py-8 md:scroll-mt-20 md:py-20"
     >
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl">

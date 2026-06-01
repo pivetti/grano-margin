@@ -51,6 +51,16 @@ export type ConvertedPrices = {
   precoOleoUsdTon?: number;
 };
 
+export type CommercialDiscounts = {
+  freteFarelo: number;
+  freteOleo: number;
+  servicosPortuarios: number;
+  taxaPortuaria: number;
+  comissaoVendedorFarelo: number;
+  comissaoVendedorOleo: number;
+  comissaoCorretor: number;
+};
+
 const KG_POR_SACA = 60;
 const KG_POR_BUSHEL_SOJA = 27.216;
 const SHORT_TON_EM_TONELADA_METRICA = 0.90718474;
@@ -100,17 +110,21 @@ export function normalizeCrushMarginInput(
     ...input,
     sojaUsdPorBushel,
     premioSojaUsdPorBushel,
-    freteFareloPorTon: normalizeOptionalNumber(input.freteFareloPorTon),
-    freteOleoPorTon: normalizeOptionalNumber(input.freteOleoPorTon),
-    servicosPortuariosPorTon: normalizeOptionalNumber(
-      input.servicosPortuariosPorTon,
+    freteFareloPorTon: normalizeOptionalNumber(
+      legacyInput.freteFareloPorTon,
     ),
-    taxaPortuariaPorTon: normalizeOptionalNumber(input.taxaPortuariaPorTon),
+    freteOleoPorTon: normalizeOptionalNumber(legacyInput.freteOleoPorTon),
+    servicosPortuariosPorTon: normalizeOptionalNumber(
+      legacyInput.servicosPortuariosPorTon,
+    ),
+    taxaPortuariaPorTon: normalizeOptionalNumber(
+      legacyInput.taxaPortuariaPorTon,
+    ),
     comissaoVendedorFareloPercentual: normalizeOptionalNumber(
-      input.comissaoVendedorFareloPercentual,
+      legacyInput.comissaoVendedorFareloPercentual,
     ),
     comissaoVendedorOleoPercentual: normalizeOptionalNumber(
-      input.comissaoVendedorOleoPercentual,
+      legacyInput.comissaoVendedorOleoPercentual,
     ),
   };
 }
@@ -120,6 +134,8 @@ export type CrushMarginResult = {
   receitaFarelo: number;
   receitaOleo: number;
   receitaTotalDerivados: number;
+  descontosComerciais: CommercialDiscounts;
+  descontosComerciaisTotal: number;
   custoTotal: number;
   margemBruta: number;
   margemLiquida: number;
@@ -127,46 +143,39 @@ export type CrushMarginResult = {
   precoMaximoSojaParaMargemZero: number;
   status: "PREJUIZO" | "APERTADA" | "BOA" | "EXCELENTE";
   statusLabel: string;
-  receitaFareloBruta?: number;
-  receitaOleoBruta?: number;
-  descontoFreteFarelo?: number;
-  descontoFreteOleo?: number;
-  descontoServicosPortuarios?: number;
-  descontoTaxaPortuaria?: number;
-  comissaoVendedorFarelo?: number;
-  comissaoVendedorOleo?: number;
-  comissaoCorretor?: number;
-  descontosComerciaisTotal?: number;
 };
 
 export function convertToBrlPrices(input: CrushMarginInput): ConvertedPrices {
-  if (input.mode === "BRL") {
+  const normalizedInput = normalizeCrushMarginInput(input);
+
+  if (normalizedInput.mode === "BRL") {
     return {
-      precoSojaSaca: input.precoSojaSaca,
-      precoFareloTon: input.precoFareloTon,
-      precoOleoTon: input.precoOleoTon,
+      precoSojaSaca: normalizedInput.precoSojaSaca,
+      precoFareloTon: normalizedInput.precoFareloTon,
+      precoOleoTon: normalizedInput.precoOleoTon,
     };
   }
 
   const bushelsPorSaca = KG_POR_SACA / KG_POR_BUSHEL_SOJA;
   const sojaAjustadaUsdPorBushel =
-    input.sojaUsdPorBushel + input.premioSojaUsdPorBushel;
+    normalizedInput.sojaUsdPorBushel +
+    normalizedInput.premioSojaUsdPorBushel;
   const precoSojaUsdSaca = sojaAjustadaUsdPorBushel * bushelsPorSaca;
 
   const precoFareloUsdTon =
-    input.fareloUsdPorShortTon / SHORT_TON_EM_TONELADA_METRICA;
+    normalizedInput.fareloUsdPorShortTon / SHORT_TON_EM_TONELADA_METRICA;
 
-  const oleoUsdPorLibra = input.oleoCentsPorLibra / 100;
+  const oleoUsdPorLibra = normalizedInput.oleoCentsPorLibra / 100;
   const oleoUsdPorKg = oleoUsdPorLibra / KG_POR_LIBRA;
   const precoOleoUsdTon = oleoUsdPorKg * 1000;
 
   return {
-    precoSojaSaca: precoSojaUsdSaca * input.cotacaoDolar,
-    precoFareloTon: precoFareloUsdTon * input.cotacaoDolar,
-    precoOleoTon: precoOleoUsdTon * input.cotacaoDolar,
-    cotacaoDolar: input.cotacaoDolar,
-    sojaUsdPorBushel: input.sojaUsdPorBushel,
-    premioSojaUsdPorBushel: input.premioSojaUsdPorBushel,
+    precoSojaSaca: precoSojaUsdSaca * normalizedInput.cotacaoDolar,
+    precoFareloTon: precoFareloUsdTon * normalizedInput.cotacaoDolar,
+    precoOleoTon: precoOleoUsdTon * normalizedInput.cotacaoDolar,
+    cotacaoDolar: normalizedInput.cotacaoDolar,
+    sojaUsdPorBushel: normalizedInput.sojaUsdPorBushel,
+    premioSojaUsdPorBushel: normalizedInput.premioSojaUsdPorBushel,
     sojaAjustadaUsdPorBushel,
     precoSojaUsdSaca,
     precoFareloUsdTon,
@@ -190,48 +199,48 @@ export function calcularCrushMargin(input: CrushMarginInput): CrushMarginResult 
 
   const receitaFarelo = precoFareloTon * toneladasFareloPorSaca;
   const receitaOleo = precoOleoTon * toneladasOleoPorSaca;
-
-  let descontoFreteFarelo = 0;
-  let descontoFreteOleo = 0;
-  let descontoServicosPortuarios = 0;
-  let descontoTaxaPortuaria = 0;
-  let comissaoVendedorFarelo = 0;
-  let comissaoVendedorOleo = 0;
-  let comissaoCorretor = 0;
-
-  if (normalizedInput.mode === "CBOT") {
-    descontoFreteFarelo =
-      normalizeOptionalNumber(normalizedInput.freteFareloPorTon) *
-      toneladasFareloPorSaca;
-    descontoFreteOleo =
-      normalizeOptionalNumber(normalizedInput.freteOleoPorTon) *
-      toneladasOleoPorSaca;
-    descontoServicosPortuarios =
-      normalizeOptionalNumber(normalizedInput.servicosPortuariosPorTon) *
-      toneladasDerivadosPorSaca;
-    descontoTaxaPortuaria =
-      normalizeOptionalNumber(normalizedInput.taxaPortuariaPorTon) *
-      toneladasDerivadosPorSaca;
-    comissaoVendedorFarelo =
-      receitaFarelo * percentToRate(normalizedInput.comissaoVendedorFareloPercentual);
-    comissaoVendedorOleo =
-      receitaOleo * percentToRate(normalizedInput.comissaoVendedorOleoPercentual);
-  } else {
-    comissaoCorretor =
-      (receitaFarelo + receitaOleo) *
-      percentToRate(normalizedInput.comissaoCorretorPercentual);
-  }
-
-  const descontosComerciaisTotal =
-    descontoFreteFarelo +
-    descontoFreteOleo +
-    descontoServicosPortuarios +
-    descontoTaxaPortuaria +
-    comissaoVendedorFarelo +
-    comissaoVendedorOleo +
-    comissaoCorretor;
-
   const receitaTotalDerivados = receitaFarelo + receitaOleo;
+
+  const descontosComerciais: CommercialDiscounts =
+    normalizedInput.mode === "CBOT"
+      ? {
+          freteFarelo:
+            normalizeOptionalNumber(normalizedInput.freteFareloPorTon) *
+            toneladasFareloPorSaca,
+          freteOleo:
+            normalizeOptionalNumber(normalizedInput.freteOleoPorTon) *
+            toneladasOleoPorSaca,
+          servicosPortuarios:
+            normalizeOptionalNumber(
+              normalizedInput.servicosPortuariosPorTon,
+            ) * toneladasDerivadosPorSaca,
+          taxaPortuaria:
+            normalizeOptionalNumber(normalizedInput.taxaPortuariaPorTon) *
+            toneladasDerivadosPorSaca,
+          comissaoVendedorFarelo:
+            receitaFarelo *
+            percentToRate(normalizedInput.comissaoVendedorFareloPercentual),
+          comissaoVendedorOleo:
+            receitaOleo *
+            percentToRate(normalizedInput.comissaoVendedorOleoPercentual),
+          comissaoCorretor: 0,
+        }
+      : {
+          freteFarelo: 0,
+          freteOleo: 0,
+          servicosPortuarios: 0,
+          taxaPortuaria: 0,
+          comissaoVendedorFarelo: 0,
+          comissaoVendedorOleo: 0,
+          comissaoCorretor:
+            receitaTotalDerivados *
+            percentToRate(normalizedInput.comissaoCorretorPercentual),
+        };
+
+  const descontosComerciaisTotal = Object.values(descontosComerciais).reduce(
+    (total, value) => total + value,
+    0,
+  );
   const custoTotal =
     precoSojaSaca +
     normalizedInput.custosOperacionaisPorSaca +
@@ -249,7 +258,7 @@ export function calcularCrushMargin(input: CrushMarginInput): CrushMarginResult 
     descontosComerciaisTotal;
 
   let status: CrushMarginResult["status"] = "PREJUIZO";
-  let statusLabel = "Prejuízo / operação desfavorável";
+  let statusLabel = "Prejuizo / operacao desfavoravel";
 
   if (margemLiquida > 25) {
     status = "EXCELENTE";
@@ -267,6 +276,8 @@ export function calcularCrushMargin(input: CrushMarginInput): CrushMarginResult 
     receitaFarelo,
     receitaOleo,
     receitaTotalDerivados,
+    descontosComerciais,
+    descontosComerciaisTotal,
     custoTotal,
     margemBruta,
     margemLiquida,
@@ -274,15 +285,5 @@ export function calcularCrushMargin(input: CrushMarginInput): CrushMarginResult 
     precoMaximoSojaParaMargemZero,
     status,
     statusLabel,
-    receitaFareloBruta: receitaFarelo,
-    receitaOleoBruta: receitaOleo,
-    descontoFreteFarelo,
-    descontoFreteOleo,
-    descontoServicosPortuarios,
-    descontoTaxaPortuaria,
-    comissaoVendedorFarelo,
-    comissaoVendedorOleo,
-    comissaoCorretor,
-    descontosComerciaisTotal,
   };
 }

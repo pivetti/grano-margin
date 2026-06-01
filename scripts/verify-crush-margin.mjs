@@ -25,6 +25,25 @@ assert.equal(round(brlResult.margemPercentualSobreCusto), 11.658031);
 assert.equal(round(brlResult.precoMaximoSojaParaMargemZero), 142.23);
 assert.equal(brlResult.status, "BOA");
 
+const brlWithBrokerResult = calcularCrushMargin({
+  mode: "BRL",
+  precoSojaSaca: 127.38,
+  precoFareloTon: 1670,
+  precoOleoTon: 6250,
+  kgFareloPorSaca: 44,
+  kgOleoPorSaca: 11,
+  custosOperacionaisPorSaca: 0,
+  comissaoCorretorPercentual: 10,
+});
+
+assert.equal(round(brlWithBrokerResult.descontosComerciaisTotal), 14.223);
+assert.equal(round(brlWithBrokerResult.custoTotal), 141.603);
+assert.equal(round(brlWithBrokerResult.margemLiquida), 0.627);
+assert.equal(
+  round(brlWithBrokerResult.precoMaximoSojaParaMargemZero),
+  128.007,
+);
+
 const cbotInput = {
   mode: "CBOT",
   cotacaoDolar: 4.9079,
@@ -48,6 +67,50 @@ assert.equal(round(cbotPrices.precoOleoUsdTon ?? 0), 1102.311311);
 assert.equal(round(cbotResult.receitaFarelo), 71.412445);
 assert.equal(round(cbotResult.receitaOleo), 59.510371);
 assert.equal(round(cbotResult.margemLiquida), 3.572764);
+
+const cbotWithCommercialCostsResult = calcularCrushMargin({
+  ...cbotInput,
+  freteFareloPorTon: 10,
+  freteOleoPorTon: 20,
+  servicosPortuariosPorTon: 30,
+  taxaPortuariaPorTon: 40,
+  comissaoVendedorFareloPercentual: 1,
+  comissaoVendedorOleoPercentual: 2,
+});
+
+assert.equal(
+  round(cbotWithCommercialCostsResult.descontosComerciais.freteFarelo),
+  0.44,
+);
+assert.equal(
+  round(cbotWithCommercialCostsResult.descontosComerciais.freteOleo),
+  0.22,
+);
+assert.equal(
+  round(cbotWithCommercialCostsResult.descontosComerciais.servicosPortuarios),
+  1.65,
+);
+assert.equal(
+  round(cbotWithCommercialCostsResult.descontosComerciais.taxaPortuaria),
+  2.2,
+);
+assert.equal(
+  round(
+    cbotWithCommercialCostsResult.descontosComerciais
+      .comissaoVendedorFarelo,
+  ),
+  0.714124,
+);
+assert.equal(
+  round(
+    cbotWithCommercialCostsResult.descontosComerciais.comissaoVendedorOleo,
+  ),
+  1.190207,
+);
+assert.equal(
+  round(cbotWithCommercialCostsResult.descontosComerciaisTotal),
+  6.414332,
+);
 
 const cbotWithPremiumPrices = convertToBrlPrices({
   ...cbotInput,
